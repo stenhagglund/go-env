@@ -29,7 +29,7 @@ type Config struct {
         Host 	 string   `env:"HOST,required,default=localhost"`
     }
     Secret 	 []byte   `env:"SECRET,required,type=byte"`
-    Versions []string `env:"VALUES,default=v1,v2"`
+    Versions []string `env:"VALUES,default=v1"`
     Names 	 []string `env:"VALUES,default=n1:n2:n3,separator=:"`
 }
 
@@ -46,6 +46,7 @@ if err := env.Parse(&config); err != nil {
 - [Slice types](https://golang.org/ref/spec#Slice_types)
 - [Struct types](https://golang.org/ref/spec#Struct_types)
 - [time.Duration](https://golang.org/pkg/time/#Duration)
+- [time.Time](https://golang.org/pkg/time/#Time)
 
 ## License
 The MIT License (MIT) - see LICENSE for more details

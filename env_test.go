@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	env "github.com/shagglund/go-env"
+	env "github.com/stenhagglund/go-env"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,6 +49,8 @@ type testEnvStruct struct {
 	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune"`
 	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE"`
 	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE"`
+	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE"`
+	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE"`
 }
 
 type nestedTestEnvStruct struct {
@@ -91,6 +93,8 @@ type testEnvStructRequiredValues struct {
 	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,required"`
 	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,required"`
 	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,required"`
+	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,required"`
+	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,required"`
 }
 
 // assert both struct are compatible to ensure exactly same keys
@@ -131,6 +135,8 @@ type testEnvStructDefaultValues struct {
 	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,default=exp/def/runeslice"`
 	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,default=10s"`
 	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,default=15s"`
+	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,default=2006-01-02T15:04:05Z"`
+	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,default=2006-02-02T15:04:05Z"`
 }
 
 // assert both struct are compatible to ensure exactly same keys
@@ -171,6 +177,8 @@ type testEnvStructSeparator struct {
 	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,separator=;"`
 	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,separator=;"`
 	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,separator=;"`
+	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,separator=;"`
+	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,separator=;"`
 }
 
 // assert both struct are compatible to ensure exactly same keys
@@ -185,6 +193,12 @@ type nestedTestEnvStructDefaultValues struct {
 	testEnvStructDefaultValues
 	Nested testEnvStructDefaultValues
 }
+
+var (
+	testTime       = time.Now().Round(time.Second)
+	testTimeSlice1 = time.Now().Add(time.Hour).Round(time.Second)
+	testTimeSlice2 = time.Now().Add(-time.Hour).Round(time.Second)
+)
 
 func TestParseInvalidType(t *testing.T) {
 	assert := require.New(t)
@@ -345,6 +359,9 @@ func TestParseRequired(t *testing.T) {
 			"GO_ENV_TEST_RUNE_SLICE_VALUE",
 			"GO_ENV_TEST_RUNE_VALUE",
 			"GO_ENV_TEST_TIME_DURATION_VALUE",
+			"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE",
+			"GO_ENV_TEST_TIME_VALUE",
+			"GO_ENV_TEST_TIME_SLICE_VALUE",
 		} {
 			testStruct := &testEnvStructRequiredValues{}
 			prev := os.Getenv(envKey)
@@ -395,6 +412,8 @@ func TestParseDefaults(t *testing.T) {
 		RuneSliceValue:     []rune("exp/def/runeslice"),
 		DurationValue:      10 * time.Second,
 		DurationSliceValue: []time.Duration{15 * time.Second},
+		TimeValue:          time.Date(2006, 01, 02, 15, 04, 05, 0, time.UTC),
+		TimeSliceValue:     []time.Time{time.Date(2006, 02, 02, 15, 04, 05, 0, time.UTC)},
 	}
 
 	expectedNestedEnv := nestedTestEnvStructDefaultValues{
@@ -456,6 +475,8 @@ func TestParseMultivalueSlices(t *testing.T) {
 		RuneSliceValue:     []rune("exp/multi/runeslice"),
 		DurationValue:      time.Minute,
 		DurationSliceValue: []time.Duration{time.Second, time.Minute},
+		TimeValue:          testTime,
+		TimeSliceValue:     []time.Time{testTimeSlice1, testTimeSlice2},
 	}
 
 	expectedNestedEnv := nestedTestEnvStructSeparator{
@@ -648,6 +669,16 @@ func TestParseInvalidEnvValues(t *testing.T) {
 				EnvValue:      "abc",
 				ExpectedError: errors.New("GO_ENV_TEST_TIME_DURATION_SLICE_VALUE: time: invalid duration abc"),
 			},
+			{
+				EnvKey:        "GO_ENV_TEST_TIME_VALUE",
+				EnvValue:      "abc",
+				ExpectedError: errors.New("GO_ENV_TEST_TIME_VALUE: parsing time \"abc\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"abc\" as \"2006\""),
+			},
+			{
+				EnvKey:        "GO_ENV_TEST_TIME_SLICE_VALUE",
+				EnvValue:      "abc",
+				ExpectedError: errors.New("GO_ENV_TEST_TIME_SLICE_VALUE: parsing time \"abc\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"abc\" as \"2006\""),
+			},
 		} {
 			testStruct := &testEnvStruct{}
 			prev := os.Getenv(tc.EnvKey)
@@ -709,6 +740,12 @@ func setupAllEnvVariables(te *testEnvStruct, sep string) {
 	os.Setenv("GO_ENV_TEST_RUNE_VALUE", string(te.RuneValue))
 	os.Setenv("GO_ENV_TEST_TIME_DURATION_VALUE", te.DurationValue.String())
 	os.Setenv("GO_ENV_TEST_TIME_DURATION_SLICE_VALUE", strings.Trim(strings.Join(strings.Fields(fmt.Sprint(te.DurationSliceValue)), sep), "[]"))
+	os.Setenv("GO_ENV_TEST_TIME_VALUE", te.TimeValue.Format(time.RFC3339))
+	timeStrings := make([]string, len(te.TimeSliceValue))
+	for idx, t := range te.TimeSliceValue {
+		timeStrings[idx] = t.Format(time.RFC3339)
+	}
+	os.Setenv("GO_ENV_TEST_TIME_SLICE_VALUE", strings.Trim(strings.Join(timeStrings, sep), "[]"))
 }
 
 func genValidEnvStruct() *testEnvStruct {
@@ -747,6 +784,8 @@ func genValidEnvStruct() *testEnvStruct {
 		RuneSliceValue:     []rune{'a', 'c'},
 		DurationValue:      time.Second,
 		DurationSliceValue: []time.Duration{time.Second, 2 * time.Hour},
+		TimeValue:          testTime,
+		TimeSliceValue:     []time.Time{testTimeSlice1, testTimeSlice2},
 	}
 }
 

@@ -37,6 +37,7 @@ var (
 	sliceFloat32  = reflect.TypeOf([]float32(nil))
 	sliceFloat64  = reflect.TypeOf([]float64(nil))
 	sliceDuration = reflect.TypeOf([]time.Duration(nil))
+	sliceTime     = reflect.TypeOf([]time.Time(nil))
 
 	// internal aliases, so not strictly necessary. Useful for documentational purposes.
 	sliceByte = reflect.TypeOf([]byte(nil))
@@ -55,7 +56,7 @@ var (
 //  type Config struct {
 //  	Host 	 string   `env:"HOST,required,default=localhost"`
 //  	Secret 	 []byte   `env:"SECRET,required,type=byte"`
-//  	Versions []string `env:"VALUES,default=v1,v2"`
+//  	Versions []string `env:"VALUES,default=v1"`
 //  	Names 	 []string `env:"VALUES,default=n1:n2:n3,separator=:"`
 //  }
 //
@@ -268,6 +269,17 @@ func parseSlice(fieldType reflect.StructField, field reflect.Value, envVariableN
 		}
 		field.Set(reflect.ValueOf(parsed))
 		return nil
+	case sliceTime:
+		parsed := make([]time.Time, len(data))
+		for idx, d := range data {
+			v, err := time.Parse(time.RFC3339, d)
+			if err != nil {
+				return asParseError(envVariableName, err.Error())
+			}
+			parsed[idx] = v
+		}
+		field.Set(reflect.ValueOf(parsed))
+		return nil
 	case sliceInt64:
 		parsed := make([]int64, len(data))
 		for idx, d := range data {
@@ -320,6 +332,15 @@ func parseSlice(fieldType reflect.StructField, field reflect.Value, envVariableN
 func parseSingle(fieldType reflect.StructField, field reflect.Value, envVariableName, value, aliasType string) error {
 	if fieldType.Type.String() == "time.Duration" {
 		v, err := time.ParseDuration(value)
+		if err != nil {
+			return asParseError(envVariableName, err.Error())
+		}
+		field.Set(reflect.ValueOf(v))
+		return nil
+	}
+
+	if fieldType.Type.String() == "time.Time" {
+		v, err := time.Parse(time.RFC3339, value)
 		if err != nil {
 			return asParseError(envVariableName, err.Error())
 		}
