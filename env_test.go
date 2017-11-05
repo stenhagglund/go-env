@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -15,42 +16,44 @@ import (
 )
 
 type testEnvStruct struct {
-	IntValue           int             `env:"GO_ENV_TEST_INT_VALUE"`
-	Int8Value          int8            `env:"GO_ENV_TEST_INT8_VALUE"`
-	Int16Value         int16           `env:"GO_ENV_TEST_INT16_VALUE"`
-	Int32Value         int32           `env:"GO_ENV_TEST_INT32_VALUE"`
-	Int64Value         int64           `env:"GO_ENV_TEST_INT64_VALUE"`
-	UintValue          uint            `env:"GO_ENV_TEST_UINT_VALUE"`
-	Uint8Value         uint8           `env:"GO_ENV_TEST_UINT8_VALUE"`
-	Uint16Value        uint16          `env:"GO_ENV_TEST_UINT16_VALUE"`
-	Uint32Value        uint32          `env:"GO_ENV_TEST_UINT32_VALUE"`
-	Uint64Value        uint64          `env:"GO_ENV_TEST_UINT64_VALUE"`
-	Float32Value       float32         `env:"GO_ENV_TEST_FLOAT32_VALUE"`
-	Float64Value       float64         `env:"GO_ENV_TEST_FLOAT64_VALUE"`
-	IntSliceValue      []int           `env:"GO_ENV_TEST_INT_SLICE_VALUE"`
-	Int8SliceValue     []int8          `env:"GO_ENV_TEST_INT8_SLICE_VALUE"`
-	Int16SliceValue    []int16         `env:"GO_ENV_TEST_INT16_SLICE_VALUE"`
-	Int32SliceValue    []int32         `env:"GO_ENV_TEST_INT32_SLICE_VALUE"`
-	Int64SliceValue    []int64         `env:"GO_ENV_TEST_INT64_SLICE_VALUE"`
-	UintSliceValue     []uint          `env:"GO_ENV_TEST_UINT_SLICE_VALUE"`
-	Uint8SliceValue    []uint8         `env:"GO_ENV_TEST_UINT8_SLICE_VALUE"`
-	Uint16SliceValue   []uint16        `env:"GO_ENV_TEST_UINT16_SLICE_VALUE"`
-	Uint32SliceValue   []uint32        `env:"GO_ENV_TEST_UINT32_SLICE_VALUE"`
-	Uint64SliceValue   []uint64        `env:"GO_ENV_TEST_UINT64_SLICE_VALUE"`
-	Float32SliceValue  []float32       `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE"`
-	Float64SliceValue  []float64       `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE"`
-	BoolValue          bool            `env:"GO_ENV_TEST_BOOL_VALUE"`
-	BoolSliceValue     []bool          `env:"GO_ENV_TEST_BOOL_SLICE_VALUE"`
-	StringValue        string          `env:"GO_ENV_TEST_STRING_VALUE"`
-	StringSliceValue   []string        `env:"GO_ENV_TEST_STRING_SLICE_VALUE"`
-	ByteValue          byte            `env:"GO_ENV_TEST_BYTE_VALUE,type=byte"`
-	ByteSliceValue     []byte          `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte"`
-	RuneValue          rune            `env:"GO_ENV_TEST_RUNE_VALUE,type=rune"`
-	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune"`
-	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE"`
-	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE"`
-	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE"`
-	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE"`
+	IntValue           int              `env:"GO_ENV_TEST_INT_VALUE"`
+	Int8Value          int8             `env:"GO_ENV_TEST_INT8_VALUE"`
+	Int16Value         int16            `env:"GO_ENV_TEST_INT16_VALUE"`
+	Int32Value         int32            `env:"GO_ENV_TEST_INT32_VALUE"`
+	Int64Value         int64            `env:"GO_ENV_TEST_INT64_VALUE"`
+	UintValue          uint             `env:"GO_ENV_TEST_UINT_VALUE"`
+	Uint8Value         uint8            `env:"GO_ENV_TEST_UINT8_VALUE"`
+	Uint16Value        uint16           `env:"GO_ENV_TEST_UINT16_VALUE"`
+	Uint32Value        uint32           `env:"GO_ENV_TEST_UINT32_VALUE"`
+	Uint64Value        uint64           `env:"GO_ENV_TEST_UINT64_VALUE"`
+	Float32Value       float32          `env:"GO_ENV_TEST_FLOAT32_VALUE"`
+	Float64Value       float64          `env:"GO_ENV_TEST_FLOAT64_VALUE"`
+	IntSliceValue      []int            `env:"GO_ENV_TEST_INT_SLICE_VALUE"`
+	Int8SliceValue     []int8           `env:"GO_ENV_TEST_INT8_SLICE_VALUE"`
+	Int16SliceValue    []int16          `env:"GO_ENV_TEST_INT16_SLICE_VALUE"`
+	Int32SliceValue    []int32          `env:"GO_ENV_TEST_INT32_SLICE_VALUE"`
+	Int64SliceValue    []int64          `env:"GO_ENV_TEST_INT64_SLICE_VALUE"`
+	UintSliceValue     []uint           `env:"GO_ENV_TEST_UINT_SLICE_VALUE"`
+	Uint8SliceValue    []uint8          `env:"GO_ENV_TEST_UINT8_SLICE_VALUE"`
+	Uint16SliceValue   []uint16         `env:"GO_ENV_TEST_UINT16_SLICE_VALUE"`
+	Uint32SliceValue   []uint32         `env:"GO_ENV_TEST_UINT32_SLICE_VALUE"`
+	Uint64SliceValue   []uint64         `env:"GO_ENV_TEST_UINT64_SLICE_VALUE"`
+	Float32SliceValue  []float32        `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE"`
+	Float64SliceValue  []float64        `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE"`
+	BoolValue          bool             `env:"GO_ENV_TEST_BOOL_VALUE"`
+	BoolSliceValue     []bool           `env:"GO_ENV_TEST_BOOL_SLICE_VALUE"`
+	StringValue        string           `env:"GO_ENV_TEST_STRING_VALUE"`
+	StringSliceValue   []string         `env:"GO_ENV_TEST_STRING_SLICE_VALUE"`
+	ByteValue          byte             `env:"GO_ENV_TEST_BYTE_VALUE,type=byte"`
+	ByteSliceValue     []byte           `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte"`
+	RuneValue          rune             `env:"GO_ENV_TEST_RUNE_VALUE,type=rune"`
+	RuneSliceValue     []rune           `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune"`
+	DurationValue      time.Duration    `env:"GO_ENV_TEST_TIME_DURATION_VALUE"`
+	DurationSliceValue []time.Duration  `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE"`
+	TimeValue          time.Time        `env:"GO_ENV_TEST_TIME_VALUE"`
+	TimeSliceValue     []time.Time      `env:"GO_ENV_TEST_TIME_SLICE_VALUE"`
+	RegexpValue        *regexp.Regexp   `env:"GO_ENV_TEST_REGEXP_POINTER_VALUE"`
+	RegexpSliceValue   []*regexp.Regexp `env:"GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE"`
 }
 
 type nestedTestEnvStruct struct {
@@ -59,126 +62,132 @@ type nestedTestEnvStruct struct {
 }
 
 type testEnvStructRequiredValues struct {
-	IntValue           int             `env:"GO_ENV_TEST_INT_VALUE,required"`
-	Int8Value          int8            `env:"GO_ENV_TEST_INT8_VALUE,required"`
-	Int16Value         int16           `env:"GO_ENV_TEST_INT16_VALUE,required"`
-	Int32Value         int32           `env:"GO_ENV_TEST_INT32_VALUE,required"`
-	Int64Value         int64           `env:"GO_ENV_TEST_INT64_VALUE,required"`
-	UintValue          uint            `env:"GO_ENV_TEST_UINT_VALUE,required"`
-	Uint8Value         uint8           `env:"GO_ENV_TEST_UINT8_VALUE,required"`
-	Uint16Value        uint16          `env:"GO_ENV_TEST_UINT16_VALUE,required"`
-	Uint32Value        uint32          `env:"GO_ENV_TEST_UINT32_VALUE,required"`
-	Uint64Value        uint64          `env:"GO_ENV_TEST_UINT64_VALUE,required"`
-	Float32Value       float32         `env:"GO_ENV_TEST_FLOAT32_VALUE,required"`
-	Float64Value       float64         `env:"GO_ENV_TEST_FLOAT64_VALUE,required"`
-	IntSliceValue      []int           `env:"GO_ENV_TEST_INT_SLICE_VALUE,required"`
-	Int8SliceValue     []int8          `env:"GO_ENV_TEST_INT8_SLICE_VALUE,required"`
-	Int16SliceValue    []int16         `env:"GO_ENV_TEST_INT16_SLICE_VALUE,required"`
-	Int32SliceValue    []int32         `env:"GO_ENV_TEST_INT32_SLICE_VALUE,required"`
-	Int64SliceValue    []int64         `env:"GO_ENV_TEST_INT64_SLICE_VALUE,required"`
-	UintSliceValue     []uint          `env:"GO_ENV_TEST_UINT_SLICE_VALUE,required"`
-	Uint8SliceValue    []uint8         `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,required"`
-	Uint16SliceValue   []uint16        `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,required"`
-	Uint32SliceValue   []uint32        `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,required"`
-	Uint64SliceValue   []uint64        `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,required"`
-	Float32SliceValue  []float32       `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,required"`
-	Float64SliceValue  []float64       `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,required"`
-	BoolValue          bool            `env:"GO_ENV_TEST_BOOL_VALUE,required"`
-	BoolSliceValue     []bool          `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,required"`
-	StringValue        string          `env:"GO_ENV_TEST_STRING_VALUE,required"`
-	StringSliceValue   []string        `env:"GO_ENV_TEST_STRING_SLICE_VALUE,required"`
-	ByteValue          byte            `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,required"`
-	ByteSliceValue     []byte          `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,required"`
-	RuneValue          rune            `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,required"`
-	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,required"`
-	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,required"`
-	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,required"`
-	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,required"`
-	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,required"`
+	IntValue           int              `env:"GO_ENV_TEST_INT_VALUE,required"`
+	Int8Value          int8             `env:"GO_ENV_TEST_INT8_VALUE,required"`
+	Int16Value         int16            `env:"GO_ENV_TEST_INT16_VALUE,required"`
+	Int32Value         int32            `env:"GO_ENV_TEST_INT32_VALUE,required"`
+	Int64Value         int64            `env:"GO_ENV_TEST_INT64_VALUE,required"`
+	UintValue          uint             `env:"GO_ENV_TEST_UINT_VALUE,required"`
+	Uint8Value         uint8            `env:"GO_ENV_TEST_UINT8_VALUE,required"`
+	Uint16Value        uint16           `env:"GO_ENV_TEST_UINT16_VALUE,required"`
+	Uint32Value        uint32           `env:"GO_ENV_TEST_UINT32_VALUE,required"`
+	Uint64Value        uint64           `env:"GO_ENV_TEST_UINT64_VALUE,required"`
+	Float32Value       float32          `env:"GO_ENV_TEST_FLOAT32_VALUE,required"`
+	Float64Value       float64          `env:"GO_ENV_TEST_FLOAT64_VALUE,required"`
+	IntSliceValue      []int            `env:"GO_ENV_TEST_INT_SLICE_VALUE,required"`
+	Int8SliceValue     []int8           `env:"GO_ENV_TEST_INT8_SLICE_VALUE,required"`
+	Int16SliceValue    []int16          `env:"GO_ENV_TEST_INT16_SLICE_VALUE,required"`
+	Int32SliceValue    []int32          `env:"GO_ENV_TEST_INT32_SLICE_VALUE,required"`
+	Int64SliceValue    []int64          `env:"GO_ENV_TEST_INT64_SLICE_VALUE,required"`
+	UintSliceValue     []uint           `env:"GO_ENV_TEST_UINT_SLICE_VALUE,required"`
+	Uint8SliceValue    []uint8          `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,required"`
+	Uint16SliceValue   []uint16         `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,required"`
+	Uint32SliceValue   []uint32         `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,required"`
+	Uint64SliceValue   []uint64         `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,required"`
+	Float32SliceValue  []float32        `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,required"`
+	Float64SliceValue  []float64        `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,required"`
+	BoolValue          bool             `env:"GO_ENV_TEST_BOOL_VALUE,required"`
+	BoolSliceValue     []bool           `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,required"`
+	StringValue        string           `env:"GO_ENV_TEST_STRING_VALUE,required"`
+	StringSliceValue   []string         `env:"GO_ENV_TEST_STRING_SLICE_VALUE,required"`
+	ByteValue          byte             `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,required"`
+	ByteSliceValue     []byte           `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,required"`
+	RuneValue          rune             `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,required"`
+	RuneSliceValue     []rune           `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,required"`
+	DurationValue      time.Duration    `env:"GO_ENV_TEST_TIME_DURATION_VALUE,required"`
+	DurationSliceValue []time.Duration  `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,required"`
+	TimeValue          time.Time        `env:"GO_ENV_TEST_TIME_VALUE,required"`
+	TimeSliceValue     []time.Time      `env:"GO_ENV_TEST_TIME_SLICE_VALUE,required"`
+	RegexpValue        *regexp.Regexp   `env:"GO_ENV_TEST_REGEXP_POINTER_VALUE,required"`
+	RegexpSliceValue   []*regexp.Regexp `env:"GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE,required"`
 }
 
 // assert both struct are compatible to ensure exactly same keys
 var _ = testEnvStruct(testEnvStructRequiredValues{})
 
 type testEnvStructDefaultValues struct {
-	IntValue           int             `env:"GO_ENV_TEST_INT_VALUE,default=12"`
-	Int8Value          int8            `env:"GO_ENV_TEST_INT8_VALUE,default=22"`
-	Int16Value         int16           `env:"GO_ENV_TEST_INT16_VALUE,default=32"`
-	Int32Value         int32           `env:"GO_ENV_TEST_INT32_VALUE,default=42"`
-	Int64Value         int64           `env:"GO_ENV_TEST_INT64_VALUE,default=52"`
-	UintValue          uint            `env:"GO_ENV_TEST_UINT_VALUE,default=16"`
-	Uint8Value         uint8           `env:"GO_ENV_TEST_UINT8_VALUE,default=26"`
-	Uint16Value        uint16          `env:"GO_ENV_TEST_UINT16_VALUE,default=36"`
-	Uint32Value        uint32          `env:"GO_ENV_TEST_UINT32_VALUE,default=46"`
-	Uint64Value        uint64          `env:"GO_ENV_TEST_UINT64_VALUE,default=56"`
-	Float32Value       float32         `env:"GO_ENV_TEST_FLOAT32_VALUE,default=12.0"`
-	Float64Value       float64         `env:"GO_ENV_TEST_FLOAT64_VALUE,default=22.0"`
-	IntSliceValue      []int           `env:"GO_ENV_TEST_INT_SLICE_VALUE,default=112"`
-	Int8SliceValue     []int8          `env:"GO_ENV_TEST_INT8_SLICE_VALUE,default=122"`
-	Int16SliceValue    []int16         `env:"GO_ENV_TEST_INT16_SLICE_VALUE,default=132"`
-	Int32SliceValue    []int32         `env:"GO_ENV_TEST_INT32_SLICE_VALUE,default=142"`
-	Int64SliceValue    []int64         `env:"GO_ENV_TEST_INT64_SLICE_VALUE,default=152"`
-	UintSliceValue     []uint          `env:"GO_ENV_TEST_UINT_SLICE_VALUE,default=117"`
-	Uint8SliceValue    []uint8         `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,default=127"`
-	Uint16SliceValue   []uint16        `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,default=137"`
-	Uint32SliceValue   []uint32        `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,default=147"`
-	Uint64SliceValue   []uint64        `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,default=157"`
-	Float32SliceValue  []float32       `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,default=112.0"`
-	Float64SliceValue  []float64       `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,default=122.0"`
-	BoolValue          bool            `env:"GO_ENV_TEST_BOOL_VALUE,default=1"`
-	BoolSliceValue     []bool          `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,default=1"`
-	StringValue        string          `env:"GO_ENV_TEST_STRING_VALUE,default=exp/def/string"`
-	StringSliceValue   []string        `env:"GO_ENV_TEST_STRING_SLICE_VALUE,default=exp/def/stringslice"`
-	ByteValue          byte            `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,default=b"`
-	ByteSliceValue     []byte          `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,default=exp/def/byteslice"`
-	RuneValue          rune            `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,default=r"`
-	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,default=exp/def/runeslice"`
-	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,default=10s"`
-	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,default=15s"`
-	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,default=2006-01-02T15:04:05Z"`
-	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,default=2006-02-02T15:04:05Z"`
+	IntValue           int              `env:"GO_ENV_TEST_INT_VALUE,default=12"`
+	Int8Value          int8             `env:"GO_ENV_TEST_INT8_VALUE,default=22"`
+	Int16Value         int16            `env:"GO_ENV_TEST_INT16_VALUE,default=32"`
+	Int32Value         int32            `env:"GO_ENV_TEST_INT32_VALUE,default=42"`
+	Int64Value         int64            `env:"GO_ENV_TEST_INT64_VALUE,default=52"`
+	UintValue          uint             `env:"GO_ENV_TEST_UINT_VALUE,default=16"`
+	Uint8Value         uint8            `env:"GO_ENV_TEST_UINT8_VALUE,default=26"`
+	Uint16Value        uint16           `env:"GO_ENV_TEST_UINT16_VALUE,default=36"`
+	Uint32Value        uint32           `env:"GO_ENV_TEST_UINT32_VALUE,default=46"`
+	Uint64Value        uint64           `env:"GO_ENV_TEST_UINT64_VALUE,default=56"`
+	Float32Value       float32          `env:"GO_ENV_TEST_FLOAT32_VALUE,default=12.0"`
+	Float64Value       float64          `env:"GO_ENV_TEST_FLOAT64_VALUE,default=22.0"`
+	IntSliceValue      []int            `env:"GO_ENV_TEST_INT_SLICE_VALUE,default=112"`
+	Int8SliceValue     []int8           `env:"GO_ENV_TEST_INT8_SLICE_VALUE,default=122"`
+	Int16SliceValue    []int16          `env:"GO_ENV_TEST_INT16_SLICE_VALUE,default=132"`
+	Int32SliceValue    []int32          `env:"GO_ENV_TEST_INT32_SLICE_VALUE,default=142"`
+	Int64SliceValue    []int64          `env:"GO_ENV_TEST_INT64_SLICE_VALUE,default=152"`
+	UintSliceValue     []uint           `env:"GO_ENV_TEST_UINT_SLICE_VALUE,default=117"`
+	Uint8SliceValue    []uint8          `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,default=127"`
+	Uint16SliceValue   []uint16         `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,default=137"`
+	Uint32SliceValue   []uint32         `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,default=147"`
+	Uint64SliceValue   []uint64         `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,default=157"`
+	Float32SliceValue  []float32        `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,default=112.0"`
+	Float64SliceValue  []float64        `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,default=122.0"`
+	BoolValue          bool             `env:"GO_ENV_TEST_BOOL_VALUE,default=1"`
+	BoolSliceValue     []bool           `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,default=1"`
+	StringValue        string           `env:"GO_ENV_TEST_STRING_VALUE,default=exp/def/string"`
+	StringSliceValue   []string         `env:"GO_ENV_TEST_STRING_SLICE_VALUE,default=exp/def/stringslice"`
+	ByteValue          byte             `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,default=b"`
+	ByteSliceValue     []byte           `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,default=exp/def/byteslice"`
+	RuneValue          rune             `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,default=r"`
+	RuneSliceValue     []rune           `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,default=exp/def/runeslice"`
+	DurationValue      time.Duration    `env:"GO_ENV_TEST_TIME_DURATION_VALUE,default=10s"`
+	DurationSliceValue []time.Duration  `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,default=15s"`
+	TimeValue          time.Time        `env:"GO_ENV_TEST_TIME_VALUE,default=2006-01-02T15:04:05Z"`
+	TimeSliceValue     []time.Time      `env:"GO_ENV_TEST_TIME_SLICE_VALUE,default=2006-02-02T15:04:05Z"`
+	RegexpValue        *regexp.Regexp   `env:"GO_ENV_TEST_REGEXP_POINTER_VALUE,default=def"`        // only simple regexes may be in defaults. TODO: research tags
+	RegexpSliceValue   []*regexp.Regexp `env:"GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE,default=def2"` // only simple regexes may be in defaults. TODO: research tags
 }
 
 // assert both struct are compatible to ensure exactly same keys
 var _ = testEnvStruct(testEnvStructDefaultValues{})
 
 type testEnvStructSeparator struct {
-	IntValue           int             `env:"GO_ENV_TEST_INT_VALUE,separator=;"`
-	Int8Value          int8            `env:"GO_ENV_TEST_INT8_VALUE,separator=;"`
-	Int16Value         int16           `env:"GO_ENV_TEST_INT16_VALUE,separator=;"`
-	Int32Value         int32           `env:"GO_ENV_TEST_INT32_VALUE,separator=;"`
-	Int64Value         int64           `env:"GO_ENV_TEST_INT64_VALUE,separator=;"`
-	UintValue          uint            `env:"GO_ENV_TEST_UINT_VALUE,separator=;"`
-	Uint8Value         uint8           `env:"GO_ENV_TEST_UINT8_VALUE,separator=;"`
-	Uint16Value        uint16          `env:"GO_ENV_TEST_UINT16_VALUE,separator=;"`
-	Uint32Value        uint32          `env:"GO_ENV_TEST_UINT32_VALUE,separator=;"`
-	Uint64Value        uint64          `env:"GO_ENV_TEST_UINT64_VALUE,separator=;"`
-	Float32Value       float32         `env:"GO_ENV_TEST_FLOAT32_VALUE,separator=;"`
-	Float64Value       float64         `env:"GO_ENV_TEST_FLOAT64_VALUE,separator=;"`
-	IntSliceValue      []int           `env:"GO_ENV_TEST_INT_SLICE_VALUE,separator=;"`
-	Int8SliceValue     []int8          `env:"GO_ENV_TEST_INT8_SLICE_VALUE,separator=;"`
-	Int16SliceValue    []int16         `env:"GO_ENV_TEST_INT16_SLICE_VALUE,separator=;"`
-	Int32SliceValue    []int32         `env:"GO_ENV_TEST_INT32_SLICE_VALUE,separator=;"`
-	Int64SliceValue    []int64         `env:"GO_ENV_TEST_INT64_SLICE_VALUE,separator=;"`
-	UintSliceValue     []uint          `env:"GO_ENV_TEST_UINT_SLICE_VALUE,separator=;"`
-	Uint8SliceValue    []uint8         `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,separator=;"`
-	Uint16SliceValue   []uint16        `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,separator=;"`
-	Uint32SliceValue   []uint32        `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,separator=;"`
-	Uint64SliceValue   []uint64        `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,separator=;"`
-	Float32SliceValue  []float32       `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,separator=;"`
-	Float64SliceValue  []float64       `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,separator=;"`
-	BoolValue          bool            `env:"GO_ENV_TEST_BOOL_VALUE,separator=;"`
-	BoolSliceValue     []bool          `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,separator=;"`
-	StringValue        string          `env:"GO_ENV_TEST_STRING_VALUE,separator=;"`
-	StringSliceValue   []string        `env:"GO_ENV_TEST_STRING_SLICE_VALUE,separator=;"`
-	ByteValue          byte            `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,separator=;"`
-	ByteSliceValue     []byte          `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,separator=;"`
-	RuneValue          rune            `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,separator=;"`
-	RuneSliceValue     []rune          `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,separator=;"`
-	DurationValue      time.Duration   `env:"GO_ENV_TEST_TIME_DURATION_VALUE,separator=;"`
-	DurationSliceValue []time.Duration `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,separator=;"`
-	TimeValue          time.Time       `env:"GO_ENV_TEST_TIME_VALUE,separator=;"`
-	TimeSliceValue     []time.Time     `env:"GO_ENV_TEST_TIME_SLICE_VALUE,separator=;"`
+	IntValue           int              `env:"GO_ENV_TEST_INT_VALUE,separator=;"`
+	Int8Value          int8             `env:"GO_ENV_TEST_INT8_VALUE,separator=;"`
+	Int16Value         int16            `env:"GO_ENV_TEST_INT16_VALUE,separator=;"`
+	Int32Value         int32            `env:"GO_ENV_TEST_INT32_VALUE,separator=;"`
+	Int64Value         int64            `env:"GO_ENV_TEST_INT64_VALUE,separator=;"`
+	UintValue          uint             `env:"GO_ENV_TEST_UINT_VALUE,separator=;"`
+	Uint8Value         uint8            `env:"GO_ENV_TEST_UINT8_VALUE,separator=;"`
+	Uint16Value        uint16           `env:"GO_ENV_TEST_UINT16_VALUE,separator=;"`
+	Uint32Value        uint32           `env:"GO_ENV_TEST_UINT32_VALUE,separator=;"`
+	Uint64Value        uint64           `env:"GO_ENV_TEST_UINT64_VALUE,separator=;"`
+	Float32Value       float32          `env:"GO_ENV_TEST_FLOAT32_VALUE,separator=;"`
+	Float64Value       float64          `env:"GO_ENV_TEST_FLOAT64_VALUE,separator=;"`
+	IntSliceValue      []int            `env:"GO_ENV_TEST_INT_SLICE_VALUE,separator=;"`
+	Int8SliceValue     []int8           `env:"GO_ENV_TEST_INT8_SLICE_VALUE,separator=;"`
+	Int16SliceValue    []int16          `env:"GO_ENV_TEST_INT16_SLICE_VALUE,separator=;"`
+	Int32SliceValue    []int32          `env:"GO_ENV_TEST_INT32_SLICE_VALUE,separator=;"`
+	Int64SliceValue    []int64          `env:"GO_ENV_TEST_INT64_SLICE_VALUE,separator=;"`
+	UintSliceValue     []uint           `env:"GO_ENV_TEST_UINT_SLICE_VALUE,separator=;"`
+	Uint8SliceValue    []uint8          `env:"GO_ENV_TEST_UINT8_SLICE_VALUE,separator=;"`
+	Uint16SliceValue   []uint16         `env:"GO_ENV_TEST_UINT16_SLICE_VALUE,separator=;"`
+	Uint32SliceValue   []uint32         `env:"GO_ENV_TEST_UINT32_SLICE_VALUE,separator=;"`
+	Uint64SliceValue   []uint64         `env:"GO_ENV_TEST_UINT64_SLICE_VALUE,separator=;"`
+	Float32SliceValue  []float32        `env:"GO_ENV_TEST_FLOAT32_SLICE_VALUE,separator=;"`
+	Float64SliceValue  []float64        `env:"GO_ENV_TEST_FLOAT64_SLICE_VALUE,separator=;"`
+	BoolValue          bool             `env:"GO_ENV_TEST_BOOL_VALUE,separator=;"`
+	BoolSliceValue     []bool           `env:"GO_ENV_TEST_BOOL_SLICE_VALUE,separator=;"`
+	StringValue        string           `env:"GO_ENV_TEST_STRING_VALUE,separator=;"`
+	StringSliceValue   []string         `env:"GO_ENV_TEST_STRING_SLICE_VALUE,separator=;"`
+	ByteValue          byte             `env:"GO_ENV_TEST_BYTE_VALUE,type=byte,separator=;"`
+	ByteSliceValue     []byte           `env:"GO_ENV_TEST_BYTE_SLICE_VALUE,type=byte,separator=;"`
+	RuneValue          rune             `env:"GO_ENV_TEST_RUNE_VALUE,type=rune,separator=;"`
+	RuneSliceValue     []rune           `env:"GO_ENV_TEST_RUNE_SLICE_VALUE,type=rune,separator=;"`
+	DurationValue      time.Duration    `env:"GO_ENV_TEST_TIME_DURATION_VALUE,separator=;"`
+	DurationSliceValue []time.Duration  `env:"GO_ENV_TEST_TIME_DURATION_SLICE_VALUE,separator=;"`
+	TimeValue          time.Time        `env:"GO_ENV_TEST_TIME_VALUE,separator=;"`
+	TimeSliceValue     []time.Time      `env:"GO_ENV_TEST_TIME_SLICE_VALUE,separator=;"`
+	RegexpValue        *regexp.Regexp   `env:"GO_ENV_TEST_REGEXP_POINTER_VALUE,separator=;"`
+	RegexpSliceValue   []*regexp.Regexp `env:"GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE,separator=;"`
 }
 
 // assert both struct are compatible to ensure exactly same keys
@@ -198,6 +207,10 @@ var (
 	testTime       = time.Now().Round(time.Second)
 	testTimeSlice1 = time.Now().Add(time.Hour).Round(time.Second)
 	testTimeSlice2 = time.Now().Add(-time.Hour).Round(time.Second)
+
+	testRegexp       = regexp.MustCompile("\\Adef\\z")
+	testRegexpSlice1 = regexp.MustCompile(".*")
+	testRegexpSlice2 = regexp.MustCompile("\\A[A-z]*\\z")
 )
 
 func TestParseInvalidType(t *testing.T) {
@@ -414,6 +427,8 @@ func TestParseDefaults(t *testing.T) {
 		DurationSliceValue: []time.Duration{15 * time.Second},
 		TimeValue:          time.Date(2006, 01, 02, 15, 04, 05, 0, time.UTC),
 		TimeSliceValue:     []time.Time{time.Date(2006, 02, 02, 15, 04, 05, 0, time.UTC)},
+		RegexpValue:        regexp.MustCompile("def"),
+		RegexpSliceValue:   []*regexp.Regexp{regexp.MustCompile("def2")},
 	}
 
 	expectedNestedEnv := nestedTestEnvStructDefaultValues{
@@ -477,6 +492,8 @@ func TestParseMultivalueSlices(t *testing.T) {
 		DurationSliceValue: []time.Duration{time.Second, time.Minute},
 		TimeValue:          testTime,
 		TimeSliceValue:     []time.Time{testTimeSlice1, testTimeSlice2},
+		RegexpValue:        testRegexp,
+		RegexpSliceValue:   []*regexp.Regexp{testRegexpSlice1, testRegexpSlice2},
 	}
 
 	expectedNestedEnv := nestedTestEnvStructSeparator{
@@ -679,6 +696,16 @@ func TestParseInvalidEnvValues(t *testing.T) {
 				EnvValue:      "abc",
 				ExpectedError: errors.New("GO_ENV_TEST_TIME_SLICE_VALUE: parsing time \"abc\" as \"2006-01-02T15:04:05Z07:00\": cannot parse \"abc\" as \"2006\""),
 			},
+			{
+				EnvKey:        "GO_ENV_TEST_REGEXP_POINTER_VALUE",
+				EnvValue:      "*",
+				ExpectedError: errors.New("GO_ENV_TEST_REGEXP_POINTER_VALUE: error parsing regexp: missing argument to repetition operator: `*`"),
+			},
+			{
+				EnvKey:        "GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE",
+				EnvValue:      "*",
+				ExpectedError: errors.New("GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE: error parsing regexp: missing argument to repetition operator: `*`"),
+			},
 		} {
 			testStruct := &testEnvStruct{}
 			prev := os.Getenv(tc.EnvKey)
@@ -746,6 +773,8 @@ func setupAllEnvVariables(te *testEnvStruct, sep string) {
 		timeStrings[idx] = t.Format(time.RFC3339)
 	}
 	os.Setenv("GO_ENV_TEST_TIME_SLICE_VALUE", strings.Trim(strings.Join(timeStrings, sep), "[]"))
+	os.Setenv("GO_ENV_TEST_REGEXP_POINTER_VALUE", te.RegexpValue.String())
+	os.Setenv("GO_ENV_TEST_REGEXP_POINTER_SLICE_VALUE", strings.Trim(strings.Join(strings.Fields(fmt.Sprint(te.RegexpSliceValue)), sep), "[]"))
 }
 
 func genValidEnvStruct() *testEnvStruct {
@@ -786,6 +815,8 @@ func genValidEnvStruct() *testEnvStruct {
 		DurationSliceValue: []time.Duration{time.Second, 2 * time.Hour},
 		TimeValue:          testTime,
 		TimeSliceValue:     []time.Time{testTimeSlice1, testTimeSlice2},
+		RegexpValue:        testRegexp,
+		RegexpSliceValue:   []*regexp.Regexp{testRegexpSlice1, testRegexpSlice2},
 	}
 }
 

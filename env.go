@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -38,6 +39,7 @@ var (
 	sliceFloat64  = reflect.TypeOf([]float64(nil))
 	sliceDuration = reflect.TypeOf([]time.Duration(nil))
 	sliceTime     = reflect.TypeOf([]time.Time(nil))
+	sliceRegexp   = reflect.TypeOf([]*regexp.Regexp(nil))
 
 	// internal aliases, so not strictly necessary. Useful for documentational purposes.
 	sliceByte = reflect.TypeOf([]byte(nil))
@@ -280,6 +282,17 @@ func parseSlice(fieldType reflect.StructField, field reflect.Value, envVariableN
 		}
 		field.Set(reflect.ValueOf(parsed))
 		return nil
+	case sliceRegexp:
+		parsed := make([]*regexp.Regexp, len(data))
+		for idx, d := range data {
+			v, err := regexp.Compile(d)
+			if err != nil {
+				return asParseError(envVariableName, err.Error())
+			}
+			parsed[idx] = v
+		}
+		field.Set(reflect.ValueOf(parsed))
+		return nil
 	case sliceInt64:
 		parsed := make([]int64, len(data))
 		for idx, d := range data {
@@ -341,6 +354,15 @@ func parseSingle(fieldType reflect.StructField, field reflect.Value, envVariable
 
 	if fieldType.Type.String() == "time.Time" {
 		v, err := time.Parse(time.RFC3339, value)
+		if err != nil {
+			return asParseError(envVariableName, err.Error())
+		}
+		field.Set(reflect.ValueOf(v))
+		return nil
+	}
+
+	if fieldType.Type.String() == "*regexp.Regexp" {
+		v, err := regexp.Compile(value)
 		if err != nil {
 			return asParseError(envVariableName, err.Error())
 		}

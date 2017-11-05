@@ -47,6 +47,7 @@ if err := env.Parse(&config); err != nil {
 - [Struct types](https://golang.org/ref/spec#Struct_types)
 - [time.Duration](https://golang.org/pkg/time/#Duration)
 - [time.Time](https://golang.org/pkg/time/#Time)
+- [*regexp.Regexp](https://golang.org/pkg/regexp/#Regexp)
 
 ## License
 The MIT License (MIT) - see LICENSE for more details
