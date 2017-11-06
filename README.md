@@ -1,4 +1,8 @@
 # GO-ENV - simple environment to struct parser
+[![Build Status](https://travis-ci.org/stenhagglund/go-env.svg?branch=master)](https://travis-ci.org/stenhagglund/go-env)
+[![Coverage Status](https://img.shields.io/codecov/c/github/stenhagglund/go-env/master.svg?maxAge=2592000)](https://codecov.io/gh/stenhagglund/go-env)
+[![Go Report Card](https://goreportcard.com/badge/stenhagglund/go-env)](https://goreportcard.com/report/stenhagglund/go-env)
+[![GoDoc](https://godoc.org/github.com/stenhagglund/go-env?status.svg)](https://godoc.org/github.com/stenhagglund/go-env)
 
 ## Install
 

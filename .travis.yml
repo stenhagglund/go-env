@@ -4,3 +4,15 @@ go:
   - 1.8
   - 1.9
   - master
+
+install:
+  - go get -u github.com/stretchr/testify github.com/golang/lint/golint
+
+script:
+  - if ! [ -z "$(gofmt -l .)" ]; then exit 1; fi
+  - go vet .
+  - golint .
+  - go test -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
