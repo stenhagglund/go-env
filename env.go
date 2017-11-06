@@ -77,11 +77,7 @@ func Parse(v interface{}) error {
 		return errors.New("Expected a struct pointer")
 	}
 
-	if err := parseEnv(elem); err != nil {
-		return err
-	}
-
-	return nil
+	return parseEnv(elem)
 }
 
 func parseEnv(s reflect.Value) error {
@@ -274,7 +270,7 @@ func parseSlice(fieldType reflect.StructField, field reflect.Value, envVariableN
 	case sliceTime:
 		parsed := make([]time.Time, len(data))
 		for idx, d := range data {
-			v, err := time.Parse(time.RFC3339, d)
+			v, err := time.ParseInLocation(time.RFC3339, d, time.Local)
 			if err != nil {
 				return asParseError(envVariableName, err.Error())
 			}
@@ -353,7 +349,7 @@ func parseSingle(fieldType reflect.StructField, field reflect.Value, envVariable
 	}
 
 	if fieldType.Type.String() == "time.Time" {
-		v, err := time.Parse(time.RFC3339, value)
+		v, err := time.ParseInLocation(time.RFC3339, value, time.Local)
 		if err != nil {
 			return asParseError(envVariableName, err.Error())
 		}

@@ -204,9 +204,11 @@ type nestedTestEnvStructDefaultValues struct {
 }
 
 var (
-	testTime       = time.Now().Round(time.Second)
-	testTimeSlice1 = time.Now().Add(time.Hour).Round(time.Second)
-	testTimeSlice2 = time.Now().Add(-time.Hour).Round(time.Second)
+	// HACK(SH): time equality comparison is broken in testify, see: https://github.com/stretchr/testify/issues/502
+	// so ensure these would match the unmarshalled ones by marshaling + unmarshaling them
+	testTime, _       = time.ParseInLocation(time.RFC3339, time.Now().Round(time.Second).Format(time.RFC3339), time.Local)
+	testTimeSlice1, _ = time.ParseInLocation(time.RFC3339, time.Now().Add(time.Hour).Round(time.Second).Format(time.RFC3339), time.Local)
+	testTimeSlice2, _ = time.ParseInLocation(time.RFC3339, time.Now().Add(-time.Hour).Round(time.Second).Format(time.RFC3339), time.Local)
 
 	testRegexp       = regexp.MustCompile("\\Adef\\z")
 	testRegexpSlice1 = regexp.MustCompile(".*")
@@ -236,8 +238,8 @@ func TestParseInvalidArgument(t *testing.T) {
 
 	withResetEnv(func() {
 		testInvalidParseTarget := []string{"abc"}
-		assert.Equal(env.Parse(&testInvalidParseTarget), errors.New("Expected a struct pointer"))
-		assert.Equal(env.Parse(struct{}{}), errors.New("Expected a pointer value"))
+		assert.Equal(errors.New("Expected a struct pointer"), env.Parse(&testInvalidParseTarget))
+		assert.Equal(errors.New("Expected a pointer value"), env.Parse(struct{}{}))
 	})
 }
 
@@ -275,8 +277,8 @@ func TestParseStructWithMissingEnvVariableName(t *testing.T) {
 	}{}
 
 	withResetEnv(func() {
-		assert.Equal(env.Parse(&testStruct), errors.New("env variable name cannot be empty"))
-		assert.Equal(env.Parse(&testNestedStruct), errors.New("env variable name cannot be empty"))
+		assert.Equal(errors.New("env variable name cannot be empty"), env.Parse(&testStruct))
+		assert.Equal(errors.New("env variable name cannot be empty"), env.Parse(&testNestedStruct))
 	})
 }
 
@@ -289,7 +291,7 @@ func TestParseStructUnknownOption(t *testing.T) {
 	}{}
 
 	withResetEnv(func() {
-		assert.Equal(env.Parse(&testStruct), errors.New("S1: unknown option abc"))
+		assert.Equal(errors.New("S1: unknown option abc"), env.Parse(&testStruct))
 	})
 }
 
@@ -311,12 +313,12 @@ func TestParseAliasType(t *testing.T) {
 		testInvalidStruct := struct {
 			Value interface{} `env:"S1,type=invalid"`
 		}{}
-		assert.Equal(env.Parse(&testInvalidStruct), errors.New("S1: invalid type \"type=invalid\", valid options are: \"byte\", \"rune\""))
+		assert.Equal(errors.New("S1: invalid type \"type=invalid\", valid options are: \"byte\", \"rune\""), env.Parse(&testInvalidStruct))
 
 		testInvalidValueStruct := struct {
 			Value interface{} `env:"S1,type"`
 		}{}
-		assert.Equal(env.Parse(&testInvalidValueStruct), errors.New("S1: invalid type \"type\", valid options are: \"byte\", \"rune\""))
+		assert.Equal(errors.New("S1: invalid type \"type\", valid options are: \"byte\", \"rune\""), env.Parse(&testInvalidValueStruct))
 	})
 }
 
@@ -327,9 +329,8 @@ func TestParse(t *testing.T) {
 	withResetEnv(func() {
 		testStruct := &testEnvStruct{}
 		setupAllEnvVariables(expectedEnv, env.DefaultSeparator)
-
 		assert.Nil(env.Parse(testStruct))
-		assert.Equal(testStruct, expectedEnv)
+		assert.Equal(expectedEnv, testStruct)
 	})
 }
 
@@ -382,7 +383,7 @@ func TestParseRequired(t *testing.T) {
 
 			err := env.Parse(testStruct)
 			assert.Error(err)
-			assert.Equal(err, errors.New(envKey+": value is required but was empty"))
+			assert.Equal(errors.New(envKey+": value is required but was empty"), err)
 
 			os.Setenv(envKey, prev)
 		}
